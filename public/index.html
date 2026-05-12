@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapToGPX | Premium Converter</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="blob"></div>
+    
+    <div class="container">
+        <div class="card">
+            <h1>MapToGPX</h1>
+            <p class="subtitle">Convert Google Maps routes to GPX files instantly without API keys.</p>
+            
+            <div class="input-group">
+                <label for="url">Google Maps URL</label>
+                <input type="text" id="url" placeholder="https://www.google.com/maps/dir/..." autocomplete="off">
+            </div>
+            
+            <button id="convertBtn">
+                <span class="btn-text">Convert & Download</span>
+                <div class="loader" id="loader"></div>
+            </button>
+            
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const convertBtn = document.getElementById('convertBtn');
+        const urlInput = document.getElementById('url');
+        const statusDiv = document.getElementById('status');
+        const loader = document.getElementById('loader');
+        const btnText = document.querySelector('.btn-text');
+
+        convertBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showStatus('Please paste a Google Maps URL', 'error');
+                return;
+            }
+
+            setLoading(true);
+            showStatus('Processing your route...', '');
+
+            try {
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Conversion failed');
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'route.gpx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                
+                showStatus('Successfully converted!', 'success');
+            } catch (err) {
+                showStatus(err.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            convertBtn.disabled = isLoading;
+            loader.style.display = isLoading ? 'block' : 'none';
+            btnText.style.display = isLoading ? 'none' : 'block';
+        }
+
+        function showStatus(msg, type) {
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status ' + type;
+        }
+    </script>
+</body>
+</html>
