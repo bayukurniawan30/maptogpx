@@ -117,7 +117,7 @@ app.post('/api/convert', async (req, res) => {
 
         route.geometry.coordinates.forEach(coord => {
             root.ele('trkpt', { lat: coord[1], lon: coord[0] })
-                .ele('time').txt(new Date().toISOString()).up()
+                // .ele('time').txt(new Date().toISOString()).up()
                 .up();
         });
 
